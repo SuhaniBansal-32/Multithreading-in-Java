@@ -7,7 +7,7 @@ class BankAccount3 {
     private final Lock lock = new ReentrantLock();
     private int balance = 1000;
 
-    public void withdraw(int amount) {
+    public void withdraw(int amount) throws InterruptedException {
         System.out.println(Thread.currentThread().getName()+ " attempting to withdraw ");
        try{
            lock.lockInterruptibly();
@@ -24,7 +24,7 @@ class BankAccount3 {
        }
        catch(InterruptedException e){
            System.out.println("Can't process withdraw, try again later.");
-           throw new RuntimeException(e);
+           throw e; // Rethrow the same exception object
        }
        finally {
            lock.unlock();
@@ -38,7 +38,13 @@ public class InterruptedLock {
         Runnable task = new Runnable() {
             @Override
             public void run() {
-                sbi.withdraw(100);
+
+                try{
+                    sbi.withdraw(1000);
+                }
+                catch(InterruptedException e){
+                    System.out.println(e);
+                }
             }
         };
 
@@ -53,13 +59,11 @@ public class InterruptedLock {
             Thread.sleep(10000);
             t2.interrupt();
         }
-        catch (RuntimeException e) {
+        catch (InterruptedException e) {
             System.out.println("Waiting time to acquire lock finished...");
             System.out.print(e.getMessage());
         }
-        catch (InterruptedException e) {
-            System.out.println(e);
-        }
+
     }
 }
 
